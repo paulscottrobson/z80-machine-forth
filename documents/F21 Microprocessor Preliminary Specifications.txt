@@ -1,0 +1,526 @@
+F21 Microprocessor Preliminary Specifications - Chuck Moore - Jeff Fox 5/8/95
+______________________________________________________________________________
+F21 contains five processors on a .8 micron custom VLSI CMOS chip.
+F21 contains a CPU, a memory interface coprocessor, a video coprocessor,
+    an analog coprocessor, and a serial/network coprocessor.
+
+The memory interface processor provides memory access to all processors giving
+lowest priority to the CPU.  The I/O coprocessors can be turned on or off by
+the CPU, and can run continuously executing their own instructions, or can
+interrupt the CPU to process their data buffers or instructions.
+
+______________________________________________________________________________
+F21 STACK PROCESSOR CPU DESCRIPTION
+
+ARCHITECTURE
+
+   This is a 21-bit Forth engine with 2 push-down stacks:
+      data stack (S) - 18 deep
+      return stack (R) - 17 deep.
+It has a 20-bit memory bus, the 21st bit serving as address or carry.
+
+A register (T) acts as the top of the data stack.  All data are placed
+in T; its prior contents are pushed onto S.
+The ALU acts upon T and S, leaves its result in T and pops S for
+binary operations (+  -or  and).
+A register (A) is used to address data.
+A program counter (P) is used to address instructions.
+The return stack stores subroutine return addresses (and occassional data).
+A configuration register (C) specifies timing and addressing options.
+
+F21 uses a physical bus that represents the number or address 00000 with
+positive logic on even bits and negative logic on odd bits.  This means
+that the package pins show AAAAA for the number or address 00000.
+Alternate bits on the pins are complemented.  -or  a number with 0AAAAA to
+determine its pattern.  Thus, the number 00100F has the pattern 0ABAA5
+on the pins. The ALU acts upon numbers; addresses are numbers.  The
+configuration register stores patterns; the package pins display patterns.
+
+INSTRUCTIONS
+
+   The CPU powers-up at address 1AAAAA (pin pattern 100000, slow ROM).
+Boot code must copy a program from 8-bit ROM to 20-bit RAM or DRAM.
+5-bit instructions are packed 4 per 20-bit word.  Jump instructions
+have a 10 or 15-bit address.  The 15-bit form jumps either within the
+current 14-bit page, or to a home page in RAM or DRAM.
+
+           bit 20 ...15 ...10  ....5 ....0
+                  slot0 slot1  slot2 slot3
+
+   10-bit jump    slot0  jump aa aaaa aaaa
+       address  p pppp pppp ppaa aaaa aaaa   (p from P register)
+
+   15-bit jump     jump 0aa aaaa aaaa aaaa
+       address  p pppp ppaa aaaa aaaa aaaa
+
+     home jump     jump 1aa aaaa aaaa aaaa
+       address  c 0c00 00aa aaaa aaaa aaaa   (c is C17)
+
+The contents of slots 1-3 must be complemented, whether instructions
+or address.  The 3rd jump format facilitates jumping from DRAM into RAM.
+A full 21-bit jump requires pushing the address into R and executing  ;
+
+If the configuration register bit c17 is set then the home page address
+becomes address 140000, which is high speed SRAM.  The 10-bit jumps are
+faster than offpage jumps in dram and free the first instruction slot for
+use by another opcode.  Single cell branch instructions can cover a range
+of 16k words in DRAM and 8k words in SRAM, and subroutine returns move
+freely between SRAM and DRAM since the return stack is 21 bits wide.
+
+   The 27 instruction codes are:
+
+   00 else   unconditional jump   08 @R+    fetch, address in R, increment R
+   01 T=0    jump if T0-19 zero   09 @A+    fetch, address in A, increment A
+   02 call   push P+1 to R, jump  0A #      fetch 20-bit in-line literal
+   03 C=0    jump if T20 zero     0B @A     fetch, address in A
+   04                             0C !R+    store, address in R, increment R
+   05                             0D !A+    store, address in A, increment A
+   06 ;      pop P from R         0E
+   07                             0F !A     store, address in A
+
+   10 com    complement T         18 pop    pop R, push into T
+   11 2*     shift T, 0 to T0     19 A@     push A into T
+   12 2/     shift T, T20 to T19  1A dup    push T into T
+   13 +*     add S to T if T0 one 1B over   push S into T
+   14 -or    exclusive-or S to T  1C push   pop T, push into R
+   15 and    and S to T           1D A!     pop T into A
+   16                             1E nop
+   17 +      add S to T           1F drop   pop T
+
+
+ Code Name   Description              Traditional Forth where A is a variable
+
+   00 else   unconditional jump                        ELSE
+   01 T=0    jump if T0-19 zero                        DUP IF
+   02 call   push P+1 to R, jump                       :
+   03 C=0    jump if T20 zero                          CARRY? IF
+   04
+   05
+   06 ;      pop P from R                              ;
+   07
+   08 @R+    fetch, address in R, increment R          R@ @ R> 1+ >R
+   09 @A+    fetch, address in A, increment A          A @ @ 1 A +!
+   0A #      fetch 20-bit in-line literal              LIT
+   0B @A     fetch, address in A                       A @ @
+   0C !R+    store, address in R, increment R          R@ ! R> 1+ >R
+   0D !A+    store, address in A, increment A          A @ ! 1 A +!
+   0E
+   0F !A     store, address in A                       A @ !
+   10 com    complement T                              -1 XOR
+   11 2*     shift T, 0 to T0                          2*
+   12 2/     shift T, T20 to T19                       2/
+   13 +*     add S to T if T0 one                      DUP 1 AND IF OVER + THEN
+   14 -or    exclusive-or S to T                       XOR
+   15 and    and S to T                                AND
+   16
+   17 +      add S to T                                +
+   18 pop    pop R, push into T                        R>
+   19 A@     push A into T                             A @
+   1A dup    push T into T                             DUP
+   1B over   push S into T                             OVER
+   1C push   pop T, push into R                        >R
+   1D A!     pop T into A                              A !
+   1E nop                                              NOP
+   1F drop   pop T                                     DROP
+                            macros
+      A! @A                                            @
+      A! !A                                            !
+      dup dup -or com                                  -1
+      dup dup -or                                      0
+      over com and -or                                 OR
+      A! push A@ pop                                   SWAP
+      # (com) push ;                                   long_jump
+
+When an opcode appears in slots 1-3, it must be complemented.
+An add instruction must be coded  nop +  if carry needs to propagate only
+10 places, or  nop nop +  for a full 20 places.  This is not required
+in slot 0 if the instruction fetch provides equivalent delay.
+
+INTERRUPT
+
+   An interrupt can occur when an instruction word is fetched.  The
+requested instruction is replaced by a 15-bit call to 00000 in home page.
+The current address will be pushed onto R when the call is executed.
+
+At least 3 stack positions must be available (reserved) for interrupts,
+2 on data and 1 on return.  Register A must be saved and restored.
+
+The cause of the interrupt is in C2-0.  C must be read to determine it.
+The interrupt is cleared when C is rewritten, which may only occur once.
+The source of the interrupt is cleared by the corresponding address bit
+in the address of C.  It is intended that this code be executed at the
+end of interrupt processing (say for C0):
+
+     A  015554 # com ( pattern 1 1110 0000 0000 0000 0--1) A!
+     @A !A A! ;
+
+The address bits A2-0 specify the interrupt(s) to be cleared.  @A !A A! ;
+must all be in the same word.  Another interrupt may occur immediately.
+
+Interrupts are edge-triggered.  If one is repeated before being cleared,
+it's lost.
+
+SPEED
+
+   4 instructions are obtained with each fetch.  Each instruction
+is executed in 3 ns, for a peak rate of 330 Mips.  Sustained rate
+depends upon the number of memory-access instructions.  With no
+data memory accesses but with instruction memory setup and access:
+
+     RAM              DRAM
+      12    15    25    40   140 ns
+     270   220   140    90    30 Mips
+
+With 1 instruction accessing data in the same memory:
+     120                40       Mips
+
+______________________________________________________________________________
+MEMORY
+
+CONFIGURATION
+
+   Typical: 0-5 DRAMs, 0-3 SRAMs, 1 ROM
+
+      5 1Mx4 Page-mode DRAMs: Toshiba TC514400APL-80
+   or 1 1Mx16 and 1 1Mx4    :
+   and/or 3 8Kx8 SRAMs      :
+
+      1 8-bit PCMCIA card   :
+   or 1 8-bit ROM           :
+
+
+CONFIGURATION REGISTER (C)
+
+   A number of options are specified in the Configuration Register (C).
+For example, timing is determined by internal delays.  These may be
+adjusted to suit.
+
+       bit 20                        0
+   pattern: - pp-s -r-- -3tt 5f-- -iii
+
+      pp - ROM page (D19,18)
+      tt - timing (dependent upon voltage, temperature, process)
+           00  40% slow
+           01  20% slow
+           10  nominal
+           11  20% fast
+       3 - Power (timing dependent upon voltage)
+           0  5.0 V
+           1  3.0 (55% fast)
+       r - ROM timing
+           0  250 ns
+           1  150
+       s - RAM timing
+           0  25 ns
+           1  12
+       5 - 512-word page (for 256Kx4 DRAMs)
+           A8 is multiplexed differently for a RAS address:
+               A9  8  7  6  5  4  3  2  1  0
+           0  A19 18 17 16 15 14 13 12 11 10
+           1  A19  9 17 16 15 14 13 12 11 10
+       f - CAS before RAS refresh on DRAM access
+           0  Refresh (For some DRAMs, the first 8 accesses after power-up
+                       must be refresh.  RAS address must change on each.)
+           1  Normal (To be set during boot)
+     iii - Interrupts
+           1--  Video
+           -1-  Network
+           --1  Analog
+
+The following patterns are commonly used:
+       Power-up  C0000
+     5V 1M DRAM  D0200 12ns SRAM
+   5V 256K DRAM  C0280
+     3V 1M DRAM  C0600
+C may be read, changed and rewritten.
+
+
+TIMING
+
+   A memory access has 3 ns overhead in addition to the access time.
+On a write to memory, data is latched on the rising edge of WE for RAM,
+ROM and IO devices controlled by these signals; but on the falling edge
+for DRAM.  RAM and ROM are not clocked, but CAS is.  WE is the signal
+to measure to verify timing.
+
+   The next instruction fetch begins as soon as no memory instructions
+(# @ ! jump) are pending.
+______________________________________________________________________________
+ADDRESS MAP 1995 DATA
+
+   address        = pattern
+   000000 - 0FFFFF          DRAM 20 bit              1 M words (or 256K words)
+   180000 - 1BFFFF          slow 8 bit SRAM          1 M bytes as 4 256k pages
+   1C0000 - 1FFFFF          fast 8 bit SRAM          1 M bytes as 4 256k pages
+   100000 - 101FFF          slow 20 bit SRAM         8 K words
+   140000 - 141FFF          fast 20 bit SRAM         8 K words
+   16BAAA           1C1000  I/O port register
+   168AAA           1C2000  analog clock register
+   16EAAA           1C4000  network clock register
+   162AAA           1C8000  network match register
+   14AAAA           1E0000  configuration register
+
+
+POWER-UP ADDRESSES
+
+     CPU        Audio      Video      Serial
+     1AAAAA     0xxxxx     0AAAAA     0xxxxx
+     page 3     off        off        off
+
+     CPU boot address 1AAAAA in slow 8 bit SRAM is pattern 00000 on the pins
+______________________________________________________________________________
+I/O PORT
+
+Write to pattern 1C1000:   0-7  data
+                         10-17  direction: pattern 00000 input
+                                                   3FC00 output
+Read from 1C1000:   0-7  pad
+                    8-9  0
+                  10-17  direction
+                  18-19  0
+
+(The production F21 will provide for external interrupt on the I/O port.)
+
+______________________________________________________________________________
+ANALOG PROCESSOR
+
+   An 11-bit register is counted-down every CLK (14.32 MHz for NTSC).
+It is reset from C at when it reaches 0.  Thus it ticks at some
+rate from 14 MHz to 7 KHz.  C is to be loaded with a value for a
+11-bit pseudo-random shift register (C0 = C10 -or C8).
+
+   A data word is read, then written to DRAM every tick.  Bits 19-13
+are sent to a binary 6-bit D-A converter.  Current output is 0 - 100 mA.
+The word is re-written with bits 5-0 from a 6-bit A-D converter. A
+64-entry gray code table look-up provides the corresponding binary value.
+Conversions take 70 ns or so (depending on amplitude) over a range of
+0 - 2.5 V.  Thus signals up to 14 MHz can be handled.  At high rates,
+memory bandwidth is a concern.
+
+   Addresses do not increment beyond 10 bits.  That is, 0FFFFF increments
+to 0FFC00.  Thus analog output cycles within a DRAM page.
+
+   If bit 10 is set the CPU is interrupted.  At its next instruction
+fetch a call to 000000 will be inserted.  The interrupt is automatically
+cleared.
+
+   The CPU sets the rate and 2 control bits in C.  Bit 18 is on/off.
+If bit 1 is set, the next address the CPU provides will be incremented
+and latched into the address register.
+
+It is intended that this code be executed at the
+end of interrupt processing (say for C0):
+
+     A  015554 # com ( pattern 1 1110 0000 0000 0000 0--1) A!
+     @A !A A! ;
+
+The address bits A2-0 specify the interrupt(s) to be cleared.  @A !A A! ;
+must all be in the same word.  Another interrupt may occur immediately.
+with both ! and @ in the same word, to set the address. Bit 1 is
+automatically reset, the other bits are undisturbed.  The next analog
+word will be the one after the address.
+
+ANALOG PROCESSOR INSTRUCTION/DATA FORMAT
+   Address      21    0-20 DRAM only
+   Data         12
+   Buffer       13    0-5  input
+                      6-9  0
+                       10  interrupt
+                    13-19  output
+
+ANALOG CLOCK REGISTER
+   Clock        13   pattern 1C2000:    1  address from CPU
+                                     6-16  rate
+                                       18  on/off (0 at reset)
+______________________________________________________________________________
+VIDEO 1995 SPECS
+
+   The Video Processor generates analog RGB images for a computer monitor
+or NTSC/PAL images for the video input of a TV monitor (or VCR).  It displays
+15-color pixels at a specified clock rate on a programmable raster,
+progressive or interlaced.
+
+   It starts executing at an address provided by the Stack Processor.  At
+that location is the programmed image, or possibly just refresh code.
+Using analog RGB outputs (sync on green), the image can have any size and
+shape.  The pixel clock can run up to 20 MHz, with a corresponding frame
+rate.  The image is formatted with vertical retrace lines, and scan lines
+with embedded horizontal retrace and blanking.  These lines are contructed
+from Pixel, Sync and Jump instructions and probably include Refresh and
+Interrupt.
+
+   Using NTSC output the image has 525 lines of 115 words (60,334 words).
+It starts with a 21-line vertical-retrace for field-1 (VR1), the 241 even
+scan lines, a 22-line VR2 and the 241 odd scan lines.  In memory, the VR1
+is followed by VR2 and then 482 scan lines.  Jump instructions thread these
+lines into the required order.  If multiple images are in memory, they can
+share VR1 and VR2.  Skip and Color-burst instructions are added for timing
+and synchronization.  Blank is not distinguished from Black.
+
+   A 3-bit read/write register controls the processor:
+
+     bit 19 . . . 15 . . .  .10 . .  . . 5 .  . . . 0
+          - R T -  - - - -  - - - -  1 0 0 0  - A - -
+
+   with  R - 0  stop
+             1  run
+         T - 0  pixel clock is CLK/2
+             1  pixel clock is CLK
+         A - 0  continue at curent address
+             1  start at next Stack Processor address
+
+The pattern in bits 4-7 is required to start the processor in slot 0.
+There is no interrupt-enable.  Including the Interrupt instruction in
+the image will generate an interrupt when it is executed.
+
+   Four 5-bit instructions are packed in each word.  Instruction bits are
+patterns!  Some instructions may occur only in certain slots.
+
+     bit 20  . . . . 15 . . .  .10 . .  . . 5 .  . . . 0
+    slot     0 0 0 0  0 1 1 1  1 1 2 2  2 2 2 3  3 3 3 3
+    Jump     1 0 a a  a a a a  a a a a  a a a a  a a a a
+ address  p  p p a a  a a a a  a a a a  a a a a  a a a a
+
+The Jump has an 18-bit address field.  Address bits 20-18 are set by the
+Stack processor when it starts the Video processor (C2 set).  The image
+is restricted to that quarter of DRAM.  It may not cross this page
+boundary.  Jump addresses must be -ored with 25555.
+
+
+NTSC
+
+   The NTSC image consists of 384x482 pixels.  Pixels occupy 96 words of
+each line.  Horizontal-retrace (HR) uses 18 words and a Jump one more.  NTSC
+images have a 4x3 aspect, so pixels are not square.  The large characters
+used by OK are 16x26 and provide 18 lines of 24 square characters.
+
+with: code binary  name       slot cycles (140 ns  at 7.16 Mhz clock)
+        P  0 ----  Pixel        -    1       0-F
+        B  0 0000  Black/Blank  -    1       0
+        S  1 0111  Sync         -    1       17
+        R  1 1111  Refresh      2    0       1F
+        J  1 1000  Jump         0    0       18
+        I          Interrupt    -    1
+        K  1 0011  Skip         0   -1       13
+        C  1 0101  Color-burst  -    1       15
+
+   HR is coded:
+      B B B B  B B B B  B S R S  S S R S  S S R S  S S R S
+      S S S S  S S S S  S S S S  S S S S  K S S S  B B B C
+      C C C C  C C C C  C C C C  C C C B  B B B B  B B B B
+   A scan line is coded:
+      HR  96*(P P P P)  J
+
+The Jump skips over the next line (for interlace) or to a VR and takes no
+time.  The Skip in slot 0 skips the Sync in slot 1, to provide 455 cycles at
+7.16 Mhz per line.
+
+   VR1 is coded:
+      E E E V V V E E E H H H H H H H H H H H H J
+   VR2 is coded:
+      H1 E E E V V V E E E H2 H H H H H H H H H H H H J
+
+with: H    HR  96*(B B B B) - blank line
+      H1   HR  39*(B B B B)
+      H2   57*(B B B B)
+      E    B B B B  B B B B  B S R S  S S R S  S S S S  S S S S
+           S S B B  50*(B B B B)
+           B B B B  B B B B  B S R S  S S R S  K S S S  S S S S
+           S S B B  50*(B B B B)
+      V    B B B B  B B B B  B S R S  S S R S  S S S S  48*(S S S S)
+           B B B B  B B B B  B B B B  B B B B
+           B B B B  B B B B  B S R S  S S R S  K S S S  48*(S S S S)
+           B B B B  B B B B  B B B B  B B B B
+
+   Jump can be used within the pixel field to provide windowing.  It takes
+a word of space, but no time.  To assure timing, a Jump must not jump to
+another Jump or Refresh.
+
+   The color modulation signal is generated from the 14MHz input as a
+square wave.  It needs low-pass filtering, which can be done by a 100pF
+load capacitor:
+   A 1V peak-peak signal across 75 Ohms requires 14 mA.
+   14 mA across 5 V says the transistor resistance is 300 Ohms.
+   3.58 MHz has a period of 280 ns, or a rise time of 70 ns.
+   Rise time of 2.2RC implies a 100pF capacitor.
+
+
+REFERENCE
+
+   Benson, K.B. TELEVISION ENGINEERING HANDBOOK, McGraw-Hill, 1986,
+   ISBN 0-07-004779-0.
+
+______________________________________________________________________________
+SERIAL/NETWORK PROCESSOR
+
+    clocked by the external CLK input
+    bit rates 9600 through 100Mbps
+    one input and one output
+    DMA transfers
+    remote CPU interrupts
+______________________________________________________________________________
+PACKAGING
+                    F21 Specification, 1994 September
+
+64 PADS    A10  P7  P6  P5 Vdd Vss  P4  P3  P2  P1
+            21  20  19  18  17  16  15  14  13  12
+      A11 22                                      11 P0
+      A12 23                                      10 RAM
+       Ao 24                                       9 8RAM
+       Ai 25                                       8 CAS
+        B 26                                       7 RAS
+        R 27                                       6 WE 
+        G 28                                       5 A9
+       Vo 29                                       4  8
+       Vi 30                                       3  7
+      CLK 31                 DIE                   2  6
+          32               LAYOUT                  1  5
+      Vdd 33                                      64  4
+      Vss 34                                      63  3
+       So 35                                      62  2
+       Si 36                                      61  1
+          37                                      60 A0
+      D19 38                                      59 D0
+       18 39                                      58  1
+       17 40                                      57  2
+       16 41                                      56  3
+       15 42                                      55  4
+       14 43                                      54  5
+            44  45  46  47  48  49  50  51  52  53
+            13  12  11  10  Vdd Vss  9   8   7   6   
+PIN-OUT
+   64-Pin DIP:  pins 1-64 same as pads 1-64 OPTIONAL
+   PRODUCTION
+   68-Pin PLCC:   x 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9
+               25                                                   x
+               26                                                   8
+               27                                                   7
+               28                                                   6
+               29                                                   5
+               30                                                   4
+               31                                                   3
+               32                                                   2
+               33                      PLCC                         1
+               34                                                  64
+               35                                                  63
+               36                                                  62
+               37                                                  61
+               38                                                  60
+               39                                                  59
+               40                                                  58
+                x                                                  57
+                 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 x
+
+   PROTOTYPES
+   PGA-65
+   Ai  A12 A10 P6  Vdd P4  P3  P1  P0 SRAM    25 23 21 19 17 15 14 12 11  9
+   R   Ao  A11 P7  P5  Vss P2 FRAM CAS RAS    27 24 22 20 18 16 13 10  8  7
+   G   B                        x  WE  A9     28 26                 x  6  5
+   Vi  Vo                          A8  A7     30 29                    4  3
+   CLK             top             A6  A5     31 32        PGA         2  1
+   Vdd Vss         view            A4  A3     33 34                   64 63
+   So  Si                          A1  A2     35 36                   61 62
+       D19                         D1  A0     37 38                   58 60
+   D18 D17 D15 D12 Vdd D9  D7  D5  D3  D0     39 40 42 45 48 50 52 54 56 59
+   D16 D14 D13 D11 D10 Vss D8  D6  D4  D2     41 43 44 46 47 49 51 53 55 57
+______________________________________________________________________________

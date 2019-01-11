@@ -1,29 +1,31 @@
 Building the boot.img kernel files
 ----------------------------------
 
-Kernel. 
+1) Kernel. 
 
 - 	contains some basic functionality which is exported e.g. page switches.
-	creates the initial imports.inc which defines the external/linking between chunks.
-	by looking for sys_<labels> in the labels list.
+- 	puts the initial system definitions in the dictionary.
 
-Library (M/C Routines)
+2) Library (M/C Routines), for each group.
 
 - 	builds composite assembly file using current boot.img information to identify start address
 - 	assembles as a binary which is loaded into the boot image.
-- 	sys_<label> definitions are added to the imports.inc file
-- 	encrypted labels are added to the dictionary.
-
+- 	sys_<label> definitions are added to the dictionary
+- 	encrypted labels are added to the dictionary (decrypted, obviously !)
 - 	macros compiled as call MacroExpander ; db <byte> <code>
 -	words wrapped in nothing/ret or pop ix/jp (ix)
 
-Dictionary 
+3) Completion.
 
+- 	system words are stripped from the dictionary.
+
+Dictionary 
+----------
 Page $20 as usual.
 
 - 	offset/0
 -	page
 -	address (low,high)
--	name length / bit 7 : macro flag/immediate
+-	name length (5 bits) / bit 7 : macro flag/immediate
 
 

@@ -1,0 +1,640 @@
+              	; --------------------------------------
+              	; zasm: assemble "__temp.asm"
+              	; date: 2019-01-11 22:33:33
+              	; --------------------------------------
+
+
+              	
+86EC:         		org $86ec
+              	
+86CA:         	sys_displayinformation = $86ca
+80A6:         	sys_gfx_setmode = $80a6
+80D0:         	sys_gfx_write = $80d0
+80E3:         	sys_gfx_writehex = $80e3
+809B:         	sys_macroexpander = $809b
+8052:         	sys_page_restore = $8052
+8039:         	sys_page_switch = $8039
+86B6:         	sys_systeminformation = $86b6
+              	
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	;
+              	;  Name :   core.asm
+              	;  Date :  10th January 2019
+              	;  Author :  Paul Robson (paul@robsons.org.uk)
+              	;  Purpose : Core words for the Machine Forth system
+              	;
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	;
+              	;  Notes :  TOS cached in DE
+              	;     A is HL
+              	;     No real return stack.
+              	;     * implemented directly.
+              	;
+              	;  Missing : ;    handled by compiler
+              	;     pop/push  short term working stack, seperate.
+              	;     @R+,!R+  make no sense because of single stack.
+              	;
+              	;  To Add :  b versions of !a !a+ @a @a+ @ ! , port access functions.
+              	;
+              	; *********************************************************************************************
+              	
+              	; *********************************************************************************************
+              	;          @a+ read A and increment
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- @a+ macro -----
+              	
+86EC:         	define_macro_40_61_2b:
+86EC: 0000    		db 0,0
+86EE: CD9B80  		call sys_macroexpander
+86F1: 05      		db end_40_61_2b-start_40_61_2b
+86F2:         	start_40_61_2b:
+86F2: D5      		push  de          ; save current TOS
+86F3: 5E      		ld   e,(hl)         ; read new TOS
+86F4: 23      		inc  hl
+86F5: 56      		ld   d,(hl)
+86F6: 23      		inc  hl
+86F7:         	end_40_61_2b:
+              	
+              	; *********************************************************************************************
+              	;            @a read A
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- @a macro -----
+              	
+86F7:         	define_macro_40_61:
+86F7: 0000    		db 0,0
+86F9: CD9B80  		call sys_macroexpander
+86FC: 05      		db end_40_61-start_40_61
+86FD:         	start_40_61:
+86FD: D5      		push  de          ; save current TOS
+86FE: 5E      		ld   e,(hl)        ; read new TOS
+86FF: 23      		inc  hl
+8700: 56      		ld   d,(hl)
+8701: 2B      		dec  hl
+8702:         	end_40_61:
+              	
+              	; *********************************************************************************************
+              	;        !a+ write TOS to A and increment
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- !a+ macro -----
+              	
+8702:         	define_macro_21_61_2b:
+8702: 0000    		db 0,0
+8704: CD9B80  		call sys_macroexpander
+8707: 05      		db end_21_61_2b-start_21_61_2b
+8708:         	start_21_61_2b:
+8708: 73      		ld   (hl),e         ; write out
+8709: 23      		inc  hl
+870A: 72      		ld   (hl),d
+870B: 23      		inc  hl
+870C: D1      		pop  de          ; update TOS
+870D:         	end_21_61_2b:
+              	
+              	; *********************************************************************************************
+              	;          !a write TOS to A
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- !a macro -----
+              	
+870D:         	define_macro_21_61:
+870D: 0000    		db 0,0
+870F: CD9B80  		call sys_macroexpander
+8712: 05      		db end_21_61-start_21_61
+8713:         	start_21_61:
+8713: 73      		ld   (hl),e         ; write out
+8714: 23      		inc  hl
+8715: 72      		ld   (hl),d
+8716: 2B      		dec  hl
+8717: D1      		pop  de          ; update TOS
+8718:         	end_21_61:
+              	
+              	; *********************************************************************************************
+              	;          com one's complement
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- com wordr -----
+              	
+8718:         	define_word_63_6f_6d:
+8718: 7A      		ld   a,d
+8719: 2F      		cpl
+871A: 57      		ld   d,a
+871B: 7B      		ld   a,e
+871C: 2F      		cpl
+871D: 5F      		ld   e,a
+871E: C9      		ret
+              	
+              	; *********************************************************************************************
+              	;          2* double TOS
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- 2* macro -----
+              	
+871F:         	define_macro_32_2a:
+871F: 0000    		db 0,0
+8721: CD9B80  		call sys_macroexpander
+8724: 03      		db end_32_2a-start_32_2a
+8725:         	start_32_2a:
+8725: EB      		ex   de,hl
+8726: 29      		add  hl,hl
+8727: EB      		ex   de,hl
+8728:         	end_32_2a:
+              	
+              	; *********************************************************************************************
+              	;          2/ halve TOS unsigned
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- 2/ macro -----
+              	
+8728:         	define_macro_32_2f:
+8728: 0000    		db 0,0
+872A: CD9B80  		call sys_macroexpander
+872D: 04      		db end_32_2f-start_32_2f
+872E:         	start_32_2f:
+872E: CB3A    		srl  d
+8730: CB1B    		rr   e
+8732:         	end_32_2f:
+              	
+              	; *********************************************************************************************
+              	;           * multiplier
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- * wordx -----
+              	
+8732:         	define_word_2a:
+8732: DDE1    		pop ix
+8734: C1      		pop  bc        ; multiplicand.
+8735: E5      		push  hl        ; save A
+8736: 210000  		ld   hl,$0000      ; result.
+8739:         	__multiply_loop:
+8739: CB41    		bit  0,c       ; check bit 0.
+873B: 2801    		jr   z,__multiply_noadd    ; don't add if 0
+873D: 19      		add  hl,de       ; add to total
+873E:         	__multiply_noadd:
+873E: EB      		ex   de,hl       ; shift DE left
+873F: 29      		add  hl,hl
+8740: EB      		ex   de,hl       ; shift BC right
+8741: CB38    		srl  b
+8743: CB19    		rr   c
+8745: 78      		ld   a,b       ; go back if not done
+8746: B1      		or   c
+8747: 20F0    		jr   nz,__multiply_loop
+8749: EB      		ex   de,hl       ; result in DE (top of stack)
+874A: E1      		pop  hl        ; restore A
+874B: DDE9    		jp (ix)
+              	
+              	; *********************************************************************************************
+              	;           -or exclusive OR
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- -or wordx -----
+              	
+874D:         	define_word_2d_6f_72:
+874D: DDE1    		pop ix
+874F: C1      		pop  bc
+8750: 7A      		ld   a,d
+8751: A8      		xor  b
+8752: 57      		ld   d,a
+8753: 7B      		ld   a,e
+8754: A9      		xor  c
+8755: 5F      		ld   e,a
+8756: DDE9    		jp (ix)
+              	
+              	; *********************************************************************************************
+              	;           and logical AND
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- and wordx -----
+              	
+8758:         	define_word_61_6e_64:
+8758: DDE1    		pop ix
+875A: C1      		pop  bc
+875B: 7A      		ld   a,d
+875C: A0      		and  b
+875D: 57      		ld   d,a
+875E: 7B      		ld   a,e
+875F: A1      		and  c
+8760: 5F      		ld   e,a
+8761: DDE9    		jp (ix)
+              	
+              	; *********************************************************************************************
+              	;           + add
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- + macro -----
+              	
+8763:         	define_macro_2b:
+8763: 0000    		db 0,0
+8765: CD9B80  		call sys_macroexpander
+8768: 04      		db end_2b-start_2b
+8769:         	start_2b:
+8769: EB      		ex   de,hl
+876A: C1      		pop  bc
+876B: 09      		add  hl,bc
+876C: EB      		ex   de,hl
+876D:         	end_2b:
+              	
+              	; *********************************************************************************************
+              	;           A@ copy A to stack
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- A@ macro -----
+              	
+876D:         	define_macro_41_40:
+876D: 0000    		db 0,0
+876F: CD9B80  		call sys_macroexpander
+8772: 03      		db end_41_40-start_41_40
+8773:         	start_41_40:
+8773: D5      		push  de          ; save old TOS
+8774: 5D      		ld   e,l         ; copy A into TOS
+8775: 54      		ld   d,h
+8776:         	end_41_40:
+              	
+              	; *********************************************************************************************
+              	;          dup Duplicate TOS
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- dup macro -----
+              	
+8776:         	define_macro_64_75_70:
+8776: 0000    		db 0,0
+8778: CD9B80  		call sys_macroexpander
+877B: 01      		db end_64_75_70-start_64_75_70
+877C:         	start_64_75_70:
+877C: D5      		push  de
+877D:         	end_64_75_70:
+              	
+              	; *********************************************************************************************
+              	;          over, 2nd copied to TOS.
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- over macro -----
+              	
+877D:         	define_macro_6f_76_65_72:
+877D: 0000    		db 0,0
+877F: CD9B80  		call sys_macroexpander
+8782: 05      		db end_6f_76_65_72-start_6f_76_65_72
+8783:         	start_6f_76_65_72:
+8783: C1      		pop  bc          ; 2nd on stack
+8784: C5      		push  bc          ; put back
+8785: D5      		push  de          ; save TOS
+8786: 58      		ld   e,b         ; copy 2nd value into DE
+8787: 51      		ld   d,c
+8788:         	end_6f_76_65_72:
+              	
+              	; *********************************************************************************************
+              	;          A! copy stack to A
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- A! macro -----
+              	
+8788:         	define_macro_41_21:
+8788: 0000    		db 0,0
+878A: CD9B80  		call sys_macroexpander
+878D: 02      		db end_41_21-start_41_21
+878E:         	start_41_21:
+878E: EB      		ex   de,hl         ; TOS in HL
+878F: D1      		pop  de          ; update TOS
+8790:         	end_41_21:
+              	
+              	; *********************************************************************************************
+              	;          drop Drop TOS
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- drop macro -----
+              	
+8790:         	define_macro_64_72_6f_70:
+8790: 0000    		db 0,0
+8792: CD9B80  		call sys_macroexpander
+8795: 01      		db end_64_72_6f_70-start_64_72_6f_70
+8796:         	start_64_72_6f_70:
+8796: D1      		pop  de
+8797:         	end_64_72_6f_70:
+              	
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	;
+              	;  Name :   standard.asm
+              	;  Date :  10th January 2019
+              	;  Author :  Paul Robson (paul@robsons.org.uk)
+              	;  Purpose : Normal macro words for the Machine Forth system
+              	;
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	
+              	; *********************************************************************************************
+              	;         @ indirect read
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- @ macro -----
+              	
+8797:         	define_macro_40:
+8797: 0000    		db 0,0
+8799: CD9B80  		call sys_macroexpander
+879C: 05      		db end_40-start_40
+879D:         	start_40:
+879D: EB      		ex   de,hl         ; address to HL
+879E: 5E      		ld   e,(hl)        ; read it
+879F: 23      		inc  hl
+87A0: 56      		ld   d,(hl)
+87A1: 2B      		dec  hl
+87A2:         	end_40:
+              	
+              	; *********************************************************************************************
+              	;         ! indirect write
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- ! macro -----
+              	
+87A2:         	define_macro_21:
+87A2: 0000    		db 0,0
+87A4: CD9B80  		call sys_macroexpander
+87A7: 06      		db end_21-start_21
+87A8:         	start_21:
+87A8: EB      		ex   de,hl         ; address to HL
+87A9: D1      		pop  de          ; data to DE
+87AA: 73      		ld   (hl),e         ; write it
+87AB: 23      		inc  hl
+87AC: 72      		ld   (hl),d
+87AD: D1      		pop  de          ; fix up TOS
+87AE:         	end_21:
+              	
+              	; *********************************************************************************************
+              	;           or logical OR
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- or wordx -----
+              	
+87AE:         	define_word_6f_72:
+87AE: DDE1    		pop ix
+87B0: C1      		pop  bc
+87B1: 7A      		ld   a,d
+87B2: B0      		or   b
+87B3: 57      		ld   d,a
+87B4: 7B      		ld   a,e
+87B5: B1      		or   c
+87B6: 5F      		ld   e,a
+87B7: DDE9    		jp (ix)
+              	
+              	; *********************************************************************************************
+              	;           swap exchange top 2
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- swap macro -----
+              	
+87B9:         	define_macro_73_77_61_70:
+87B9: 0000    		db 0,0
+87BB: CD9B80  		call sys_macroexpander
+87BE: 03      		db end_73_77_61_70-start_73_77_61_70
+87BF:         	start_73_77_61_70:
+87BF: EB      		ex   de,hl         ; HL = tos
+87C0: E3      		ex   (sp),hl        ; swap it
+87C1: EB      		ex   de,hl         ; fix up
+87C2:         	end_73_77_61_70:
+              	
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	;
+              	;  Name :   extensions.asm
+              	;  Date :  10th January 2019
+              	;  Author :  Paul Robson (paul@robsons.org.uk)
+              	;  Purpose : Core extensions
+              	;
+              	; *********************************************************************************************
+              	; *********************************************************************************************
+              	
+              	; *********************************************************************************************
+              	;          b@a+ read byte A and increment
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b@a+ macro -----
+              	
+87C2:         	define_macro_62_40_61_2b:
+87C2: 0000    		db 0,0
+87C4: CD9B80  		call sys_macroexpander
+87C7: 05      		db end_62_40_61_2b-start_62_40_61_2b
+87C8:         	start_62_40_61_2b:
+87C8: D5      		push  de          ; save current TOS
+87C9: 5E      		ld   e,(hl)         ; read new TOS
+87CA: 23      		inc  hl
+87CB: 1600    		ld   d,$00
+87CD:         	end_62_40_61_2b:
+              	
+              	; *********************************************************************************************
+              	;            b@a byte read A
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b@a macro -----
+              	
+87CD:         	define_macro_62_40_61:
+87CD: 0000    		db 0,0
+87CF: CD9B80  		call sys_macroexpander
+87D2: 04      		db end_62_40_61-start_62_40_61
+87D3:         	start_62_40_61:
+87D3: D5      		push  de          ; save current TOS
+87D4: 5E      		ld   e,(hl)        ; read new TOS
+87D5: 1600    		ld   d,$00
+87D7:         	end_62_40_61:
+              	
+              	; *********************************************************************************************
+              	;        b!a+ byte write TOS to A and increment
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b!a+ macro -----
+              	
+87D7:         	define_macro_62_21_61_2b:
+87D7: 0000    		db 0,0
+87D9: CD9B80  		call sys_macroexpander
+87DC: 03      		db end_62_21_61_2b-start_62_21_61_2b
+87DD:         	start_62_21_61_2b:
+87DD: 73      		ld   (hl),e         ; write out
+87DE: 23      		inc  hl
+87DF: D1      		pop  de          ; update TOS
+87E0:         	end_62_21_61_2b:
+              	
+              	; *********************************************************************************************
+              	;         b!a byte write TOS to A
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b!a macro -----
+              	
+87E0:         	define_macro_62_21_61:
+87E0: 0000    		db 0,0
+87E2: CD9B80  		call sys_macroexpander
+87E5: 02      		db end_62_21_61-start_62_21_61
+87E6:         	start_62_21_61:
+87E6: 73      		ld   (hl),e         ; write out
+87E7: D1      		pop  de          ; update TOS
+87E8:         	end_62_21_61:
+              	
+              	; *********************************************************************************************
+              	;         b@ byte indirect read
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b@ macro -----
+              	
+87E8:         	define_macro_62_40:
+87E8: 0000    		db 0,0
+87EA: CD9B80  		call sys_macroexpander
+87ED: 04      		db end_62_40-start_62_40
+87EE:         	start_62_40:
+87EE: EB      		ex   de,hl         ; address to HL
+87EF: 5E      		ld   e,(hl)        ; read it
+87F0: 1600    		ld   d,$00
+87F2:         	end_62_40:
+              	
+              	; *********************************************************************************************
+              	;         b! byte indirect write
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- b! macro -----
+              	
+87F2:         	define_macro_62_21:
+87F2: 0000    		db 0,0
+87F4: CD9B80  		call sys_macroexpander
+87F7: 04      		db end_62_21-start_62_21
+87F8:         	start_62_21:
+87F8: EB      		ex   de,hl         ; address to HL
+87F9: D1      		pop  de          ; data to DE
+87FA: 73      		ld   (hl),e         ; write it
+87FB: D1      		pop  de          ; fix up TOS
+87FC:         	end_62_21:
+              	
+              	; *********************************************************************************************
+              	;         nip drop second on stack
+              	; *********************************************************************************************
+              	
+              	
+              	; ----- nip macro -----
+              	
+87FC:         	define_macro_6e_69_70:
+87FC: 0000    		db 0,0
+87FE: CD9B80  		call sys_macroexpander
+8801: 01      		db end_6e_69_70-start_6e_69_70
+8802:         	start_6e_69_70:
+8802: C1      		pop  bc
+8803:         	end_6e_69_70:
+
+
+; +++ segments +++
+
+#CODE          = $86EC = 34540,  size = $0117 =   279
+
+; +++ global symbols +++
+
+__multiply_loop          = $8739 = 34617          __temp.asm:174
+__multiply_noadd         = $873E = 34622          __temp.asm:178
+_end                     = $8803 = 34819          __temp.asm:1 (unused)
+_size                    = $0117 =   279          __temp.asm:1 (unused)
+define_macro_21          = $87A2 = 34722          __temp.asm:364 (unused)
+define_macro_21_61       = $870D = 34573          __temp.asm:101 (unused)
+define_macro_21_61_2b    = $8702 = 34562          __temp.asm:82 (unused)
+define_macro_2b          = $8763 = 34659          __temp.asm:234 (unused)
+define_macro_32_2a       = $871F = 34591          __temp.asm:136 (unused)
+define_macro_32_2f       = $8728 = 34600          __temp.asm:153 (unused)
+define_macro_40          = $8797 = 34711          __temp.asm:345 (unused)
+define_macro_40_61       = $86F7 = 34551          __temp.asm:63 (unused)
+define_macro_40_61_2b    = $86EC = 34540          __temp.asm:44 (unused)
+define_macro_41_21       = $8788 = 34696          __temp.asm:303 (unused)
+define_macro_41_40       = $876D = 34669          __temp.asm:252 (unused)
+define_macro_62_21       = $87F2 = 34802          __temp.asm:515 (unused)
+define_macro_62_21_61    = $87E0 = 34784          __temp.asm:482 (unused)
+define_macro_62_21_61_2b = $87D7 = 34775          __temp.asm:465 (unused)
+define_macro_62_40       = $87E8 = 34792          __temp.asm:498 (unused)
+define_macro_62_40_61    = $87CD = 34765          __temp.asm:448 (unused)
+define_macro_62_40_61_2b = $87C2 = 34754          __temp.asm:430 (unused)
+define_macro_64_72_6f_70 = $8790 = 34704          __temp.asm:319 (unused)
+define_macro_64_75_70    = $8776 = 34678          __temp.asm:269 (unused)
+define_macro_6e_69_70    = $87FC = 34812          __temp.asm:533 (unused)
+define_macro_6f_76_65_72 = $877D = 34685          __temp.asm:284 (unused)
+define_macro_73_77_61_70 = $87B9 = 34745          __temp.asm:402 (unused)
+define_word_2a           = $8732 = 34610          __temp.asm:169 (unused)
+define_word_2d_6f_72     = $874D = 34637          __temp.asm:198 (unused)
+define_word_61_6e_64     = $8758 = 34648          __temp.asm:216 (unused)
+define_word_63_6f_6d     = $8718 = 34584          __temp.asm:120 (unused)
+define_word_6f_72        = $87AE = 34734          __temp.asm:384 (unused)
+end_21                   = $87AE = 34734          __temp.asm:375
+end_21_61                = $8718 = 34584          __temp.asm:111
+end_21_61_2b             = $870D = 34573          __temp.asm:92
+end_2b                   = $876D = 34669          __temp.asm:243
+end_32_2a                = $8728 = 34600          __temp.asm:144
+end_32_2f                = $8732 = 34610          __temp.asm:160
+end_40                   = $87A2 = 34722          __temp.asm:355
+end_40_61                = $8702 = 34562          __temp.asm:73
+end_40_61_2b             = $86F7 = 34551          __temp.asm:54
+end_41_21                = $8790 = 34704          __temp.asm:310
+end_41_40                = $8776 = 34678          __temp.asm:260
+end_62_21                = $87FC = 34812          __temp.asm:524
+end_62_21_61             = $87E8 = 34792          __temp.asm:489
+end_62_21_61_2b          = $87E0 = 34784          __temp.asm:473
+end_62_40                = $87F2 = 34802          __temp.asm:506
+end_62_40_61             = $87D7 = 34775          __temp.asm:456
+end_62_40_61_2b          = $87CD = 34765          __temp.asm:439
+end_64_72_6f_70          = $8797 = 34711          __temp.asm:325
+end_64_75_70             = $877D = 34685          __temp.asm:275
+end_6e_69_70             = $8803 = 34819          __temp.asm:539
+end_6f_76_65_72          = $8788 = 34696          __temp.asm:294
+end_73_77_61_70          = $87C2 = 34754          __temp.asm:410
+start_21                 = $87A8 = 34728          __temp.asm:368
+start_21_61              = $8713 = 34579          __temp.asm:105
+start_21_61_2b           = $8708 = 34568          __temp.asm:86
+start_2b                 = $8769 = 34665          __temp.asm:238
+start_32_2a              = $8725 = 34597          __temp.asm:140
+start_32_2f              = $872E = 34606          __temp.asm:157
+start_40                 = $879D = 34717          __temp.asm:349
+start_40_61              = $86FD = 34557          __temp.asm:67
+start_40_61_2b           = $86F2 = 34546          __temp.asm:48
+start_41_21              = $878E = 34702          __temp.asm:307
+start_41_40              = $8773 = 34675          __temp.asm:256
+start_62_21              = $87F8 = 34808          __temp.asm:519
+start_62_21_61           = $87E6 = 34790          __temp.asm:486
+start_62_21_61_2b        = $87DD = 34781          __temp.asm:469
+start_62_40              = $87EE = 34798          __temp.asm:502
+start_62_40_61           = $87D3 = 34771          __temp.asm:452
+start_62_40_61_2b        = $87C8 = 34760          __temp.asm:434
+start_64_72_6f_70        = $8796 = 34710          __temp.asm:323
+start_64_75_70           = $877C = 34684          __temp.asm:273
+start_6e_69_70           = $8802 = 34818          __temp.asm:537
+start_6f_76_65_72        = $8783 = 34691          __temp.asm:288
+start_73_77_61_70        = $87BF = 34751          __temp.asm:406
+sys_displayinformation   = $86CA = 34506          __temp.asm:4 (unused)
+sys_gfx_setmode          = $80A6 = 32934          __temp.asm:5 (unused)
+sys_gfx_write            = $80D0 = 32976          __temp.asm:6 (unused)
+sys_gfx_writehex         = $80E3 = 32995          __temp.asm:7 (unused)
+sys_macroexpander        = $809B = 32923          __temp.asm:8
+sys_page_restore         = $8052 = 32850          __temp.asm:9 (unused)
+sys_page_switch          = $8039 = 32825          __temp.asm:10 (unused)
+sys_systeminformation    = $86B6 = 34486          __temp.asm:11 (unused)
+
+
+total time: 0.0021 sec.
+no errors

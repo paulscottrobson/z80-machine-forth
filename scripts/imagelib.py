@@ -117,20 +117,18 @@ class MemoryImage(object):
 	#
 	#		Extract the dictionary
 	#
-	def getDictionary(self,getForth):
+	def getDictionary(self):
 		dictionary = {}
 		dp = self.dictionaryPage()
 		p = 0xC000
-		mask = 0x00 if getForth else 0x80
 		while self.read(dp,p) != 0:
-			if (self.read(dp,p+4) & 0x80) == mask:
-				name = ""
-				for i in range(0,self.read(dp,p+4) & 0x1F):
-					name += chr(self.read(dp,p+5+i))				
-				entry = { "name":name,"page":self.read(dp,p+1),	\
-								"address":self.read(dp,p+2)+256*self.read(dp,p+3)}
-				entry["immediate"] = (self.read(dp,p+4) & 0x80) != 0
-				dictionary[name] = entry
+			name = ""
+			for i in range(0,self.read(dp,p+4) & 0x1F):
+				name += chr(self.read(dp,p+5+i))				
+			entry = { "name":name,"page":self.read(dp,p+1),	\
+							"address":self.read(dp,p+2)+256*self.read(dp,p+3)}
+			entry["immediate"] = (self.read(dp,p+4) & 0x80) != 0
+			dictionary[name] = entry
 			p = p + self.read(dp,p)
 		return dictionary		
 	#

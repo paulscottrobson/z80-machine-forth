@@ -145,7 +145,7 @@ __multiply_noadd:
 ; 										and logical AND
 ; *********************************************************************************************
 
-@wordx 	-or
+@wordx 	and
 		pop 	bc
 		ld 		a,d
 		and 	b

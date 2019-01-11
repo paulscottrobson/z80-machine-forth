@@ -1,7 +1,0 @@
-;
-;		Files to be used to make this library.
-;
-file:	core.asm
-file:	standard.asm
-file:	extensions.asm
-;

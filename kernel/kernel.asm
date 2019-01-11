@@ -43,6 +43,7 @@ StopDefault:
 		jp 		StopDefault
 
 		include "support/paging.asm" 				; page switcher (not while executing)
+		include "support/farmemory.asm"				; far memory routines.
 		include "support/graphics.asm"				; graphic routines
 		include "support/keyboard.asm"				; keyboard I/O
 		include "support/screen48k.asm" 			; drivers

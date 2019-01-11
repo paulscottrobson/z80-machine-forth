@@ -12,7 +12,7 @@ Building the boot.img kernel files
 - 	assembles as a binary which is loaded into the boot image.
 - 	sys_<label> definitions are added to the dictionary
 - 	encrypted labels are added to the dictionary (decrypted, obviously !)
-- 	macros compiled as call MacroExpander ; db <byte> <code>
+- 	expand macros compiled as db $00,$00 call sys_macroexpander <bytesize>, <code>
 -	words wrapped in nothing/ret or pop ix/jp (ix)
 
 3) Completion.

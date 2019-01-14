@@ -131,8 +131,8 @@ __PAGEStackBase:
 ; *********************************************************************************************
 
 define_40_61_2b:
+	ld   b,end_40_61_2b-start_40_61_2b
 	call FARMacroExpander
-	db end_40_61_2b-start_40_61_2b
 start_40_61_2b:
     push   de                   ; save current TOS
     ld     e,(hl)                 ; read new TOS
@@ -146,8 +146,8 @@ end_40_61_2b:
 ; *********************************************************************************************
 
 define_40_61:
+	ld   b,end_40_61-start_40_61
 	call FARMacroExpander
-	db end_40_61-start_40_61
 start_40_61:
     push   de                   ; save current TOS
     ld     e,(hl)                ; read new TOS
@@ -161,8 +161,8 @@ end_40_61:
 ; *********************************************************************************************
 
 define_21_61_2b:
+	ld   b,end_21_61_2b-start_21_61_2b
 	call FARMacroExpander
-	db end_21_61_2b-start_21_61_2b
 start_21_61_2b:
     ld     (hl),e                 ; write out
     inc   hl
@@ -176,8 +176,8 @@ end_21_61_2b:
 ; *********************************************************************************************
 
 define_21_61:
+	ld   b,end_21_61-start_21_61
 	call FARMacroExpander
-	db end_21_61-start_21_61
 start_21_61:
     ld     (hl),e                 ; write out
     inc   hl
@@ -204,8 +204,8 @@ define_63_6f_6d:
 ; *********************************************************************************************
 
 define_32_2a:
+	ld   b,end_32_2a-start_32_2a
 	call FARMacroExpander
-	db end_32_2a-start_32_2a
 start_32_2a:
     ex     de,hl
     add   hl,hl
@@ -217,8 +217,8 @@ end_32_2a:
 ; *********************************************************************************************
 
 define_32_2f:
+	ld   b,end_32_2f-start_32_2f
 	call FARMacroExpander
-	db end_32_2f-start_32_2f
 start_32_2f:
     srl   d
     rr     e
@@ -285,8 +285,8 @@ define_61_6e_64:
 ; *********************************************************************************************
 
 define_2b:
+	ld   b,end_2b-start_2b
 	call FARMacroExpander
-	db end_2b-start_2b
 start_2b:
     ex     de,hl
     pop   bc
@@ -299,8 +299,8 @@ end_2b:
 ; *********************************************************************************************
 
 define_41_40:
+	ld   b,end_41_40-start_41_40
 	call FARMacroExpander
-	db end_41_40-start_41_40
 start_41_40:
     push   de                   ; save old TOS
     ld     e,l                 ; copy A into TOS
@@ -312,8 +312,8 @@ end_41_40:
 ; *********************************************************************************************
 
 define_64_75_70:
+	ld   b,end_64_75_70-start_64_75_70
 	call FARMacroExpander
-	db end_64_75_70-start_64_75_70
 start_64_75_70:
     push   de
 end_64_75_70:
@@ -323,8 +323,8 @@ end_64_75_70:
 ; *********************************************************************************************
 
 define_6f_76_65_72:
+	ld   b,end_6f_76_65_72-start_6f_76_65_72
 	call FARMacroExpander
-	db end_6f_76_65_72-start_6f_76_65_72
 start_6f_76_65_72:
     pop   bc                   ; 2nd on stack
     push   bc                   ; put back
@@ -338,8 +338,8 @@ end_6f_76_65_72:
 ; *********************************************************************************************
 
 define_41_21:
+	ld   b,end_41_21-start_41_21
 	call FARMacroExpander
-	db end_41_21-start_41_21
 start_41_21:
     ex     de,hl                 ; TOS in HL
     pop   de                   ; update TOS
@@ -350,8 +350,8 @@ end_41_21:
 ; *********************************************************************************************
 
 define_64_72_6f_70:
+	ld   b,end_64_72_6f_70-start_64_72_6f_70
 	call FARMacroExpander
-	db end_64_72_6f_70-start_64_72_6f_70
 start_64_72_6f_70:
     pop   de
 end_64_72_6f_70:
@@ -372,8 +372,8 @@ end_64_72_6f_70:
 ; *********************************************************************************************
 
 define_62_40_61_2b:
+	ld   b,end_62_40_61_2b-start_62_40_61_2b
 	call FARMacroExpander
-	db end_62_40_61_2b-start_62_40_61_2b
 start_62_40_61_2b:
     push   de                   ; save current TOS
     ld     e,(hl)                 ; read new TOS
@@ -386,8 +386,8 @@ end_62_40_61_2b:
 ; *********************************************************************************************
 
 define_62_40_61:
+	ld   b,end_62_40_61-start_62_40_61
 	call FARMacroExpander
-	db end_62_40_61-start_62_40_61
 start_62_40_61:
     push   de                   ; save current TOS
     ld     e,(hl)                ; read new TOS
@@ -399,8 +399,8 @@ end_62_40_61:
 ; *********************************************************************************************
 
 define_62_21_61_2b:
+	ld   b,end_62_21_61_2b-start_62_21_61_2b
 	call FARMacroExpander
-	db end_62_21_61_2b-start_62_21_61_2b
 start_62_21_61_2b:
     ld     (hl),e                 ; write out
     inc   hl
@@ -412,8 +412,8 @@ end_62_21_61_2b:
 ; *********************************************************************************************
 
 define_62_21_61:
+	ld   b,end_62_21_61-start_62_21_61
 	call FARMacroExpander
-	db end_62_21_61-start_62_21_61
 start_62_21_61:
     ld     (hl),e                 ; write out
     pop   de                   ; update TOS
@@ -424,8 +424,8 @@ end_62_21_61:
 ; *********************************************************************************************
 
 define_62_40:
+	ld   b,end_62_40-start_62_40
 	call FARMacroExpander
-	db end_62_40-start_62_40
 start_62_40:
     ex     de,hl                 ; address to HL
     ld     e,(hl)                ; read it
@@ -437,8 +437,8 @@ end_62_40:
 ; *********************************************************************************************
 
 define_62_21:
+	ld   b,end_62_21-start_62_21
 	call FARMacroExpander
-	db end_62_21-start_62_21
 start_62_21:
     ex     de,hl                 ; address to HL
     pop   de                   ; data to DE
@@ -451,8 +451,8 @@ end_62_21:
 ; *********************************************************************************************
 
 define_6e_69_70:
+	ld   b,end_6e_69_70-start_6e_69_70
 	call FARMacroExpander
-	db end_6e_69_70-start_6e_69_70
 start_6e_69_70:
     pop   bc
 end_6e_69_70:
@@ -517,8 +517,8 @@ define_67_66_78_2e_72_61_77_2e_77_72_69_74_65_68_65_78:
 ; *********************************************************************************************
 
 define_40:
+	ld   b,end_40-start_40
 	call FARMacroExpander
-	db end_40-start_40
 start_40:
     ex     de,hl                 ; address to HL
     ld     e,(hl)                ; read it
@@ -532,8 +532,8 @@ end_40:
 ; *********************************************************************************************
 
 define_21:
+	ld   b,end_21-start_21
 	call FARMacroExpander
-	db end_21-start_21
 start_21:
     ex     de,hl                 ; address to HL
     pop   de                   ; data to DE
@@ -563,8 +563,8 @@ define_6f_72:
 ; *********************************************************************************************
 
 define_73_77_61_70:
+	ld   b,end_73_77_61_70-start_73_77_61_70
 	call FARMacroExpander
-	db end_73_77_61_70-start_73_77_61_70
 start_73_77_61_70:
     ex     de,hl                 ; HL = tos
     ex     (sp),hl               ; swap it
@@ -639,11 +639,10 @@ FARCompileWord:
 ; ***********************************************************************************************
 
 FARMacroExpander:
-    ex     (sp),hl               ; old HL on stack, following byte address in HL
-    ld     b,(hl)                ; get count
-__MacroCopy:
-    inc   hl                   ; get next
-    ld    a,(hl)
+    ex     (sp),hl               ; old HL on stack, following code address in HL
+__MacroCopy:                    ; (B already has count)
+    ld    a,(hl)                ; get next
+    inc   hl
     call   FARCompileByte             ; compile it
     djnz   __MacroCopy
     pop   hl                   ; restore old HL

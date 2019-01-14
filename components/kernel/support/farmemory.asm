@@ -63,11 +63,10 @@ FARCompileWord:
 ; ***********************************************************************************************
 
 FARMacroExpander:
-		ex 		(sp),hl 							; old HL on stack, following byte address in HL
-		ld 		b,(hl)								; get count
-__MacroCopy:
-		inc 	hl 									; get next
-		ld		a,(hl)
+		ex 		(sp),hl 							; old HL on stack, following code address in HL
+__MacroCopy:										; (B already has count)
+		ld		a,(hl)								; get next
+		inc 	hl 								
 		call 	FARCompileByte 						; compile it
 		djnz 	__MacroCopy 								
 		pop 	hl 									; restore old HL

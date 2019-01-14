@@ -11,7 +11,7 @@
 
 import re,sys,os
 
-buildDir = "."+os.sep+"build"											# where to build kernel.asm
+buildDir = "."+os.sep+"work"											# where to build kernel.asm
 compDir = ".."+os.sep+"components"										# where the components are.
 #
 #		Work out components list
@@ -48,8 +48,8 @@ for comp in compList:													# for each component.
 					if l.startswith("@wordx"):							# preamble (x)
 						hOut.write("\tpop ix\n")
 					if l.startswith("@macro"):							# preamble (macro)
+						hOut.write("\tld   b,end_{0}-start_{0}\n".format(scramble))
 						hOut.write("\tcall FARMacroExpander\n")
-						hOut.write("\tdb end_{0}-start_{0}\n".format(scramble))
 						hOut.write("start_{0}:\n".format(scramble))
 
 				elif l == "@end":										# end of def

@@ -9,9 +9,9 @@ python ../scripts/makekernel.py kernel
 #
 #		Assemble the kernel
 #
-zasm -buw build/kernel.asm -o boot.img -l boot.lst
-if [ -e boot.img ]
+zasm -buw work/kernel.asm -o work/boot.img -l work/boot.lst
+if [ -e work/boot.img ]
 then
-	cp boot.img ../files/boot_clean.img
-	python ../scripts/showdictionary.py
+	cp work/boot.img ../files/boot_clean.img
+	python ../scripts/showdictionary.py work/boot.img
 fi
